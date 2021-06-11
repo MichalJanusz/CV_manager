@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from datetime import date
 
 
 # Create your models here.
@@ -43,9 +44,68 @@ class User(AbstractUser):
     """User model."""
 
     username = None
-    email = models.EmailField(_('email address'), unique=True)
+    email = models.EmailField(
+        _('email address'),
+        unique=True,
+        error_messages={
+            'unique': _("A user with that email already exists."),
+        },
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+
+class Application(models.Model):
+    """Application model."""
+
+    position = models.CharField(max_length=64)
+    company = models.CharField(max_length=128)
+    location = models.CharField(max_length=64)
+    description = models.TextField(max_length=500)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='applications')
+
+    SENT = 1
+    VIEWED = 2
+    EXAMINATION = 3
+    ONGOING = 4
+    HIRED = 5
+    REJECTED = 6
+    DECLINED = 7
+    NO_RESPONSE = 8
+
+    STATUS_CHOICES = [
+        (SENT, 'Application Sent'),
+        (VIEWED, 'Application Viewed'),
+        (EXAMINATION, 'Application is examined'),
+        (ONGOING, 'Recruitment in progress'),
+        (HIRED, 'Hired'),
+        (REJECTED, 'Rejected'),
+        (DECLINED, 'Offer declined'),
+        (NO_RESPONSE, 'No response from the company'),
+    ]
+    status = models.IntegerField(choices=STATUS_CHOICES, default=1)
+    date = models.DateField(default=date.today)
+
+    DIRECT_MAIL = 'Direct Mail'
+    LINKEDIN = 'LinkedIn'
+    JUSTJOINIT = 'JustJoinIT'
+    NOFLUFFLJOBS = 'No Fluff Jobs'
+    OTHER = 'Other'
+
+    METHOD_CHOICES = [
+        (DIRECT_MAIL, 'Direct Mail'),
+        (LINKEDIN, 'LinkedIn'),
+        (JUSTJOINIT, 'JustJoinIT'),
+        (NOFLUFFLJOBS, 'No Fluff Jobs'),
+        (OTHER, 'Other'),
+    ]
+
+    method = models.CharField(max_length=64, choices=METHOD_CHOICES, blank=True)
+    remote = models.BooleanField()
+    comment = models.TextField(max_length=200)
+
+    def __str__(self):
+        return f"Application for {self.position} in {self.company}"
