@@ -57,6 +57,9 @@ class User(AbstractUser):
 
     objects = UserManager()
 
+    def __str__(self):
+        return self.email
+
 
 class Application(models.Model):
     """Application model."""
